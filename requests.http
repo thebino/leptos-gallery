@@ -1,36 +1,48 @@
+###
+/// Health check
+GET http://localhost:3000/ HTTP/2
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+###
 /// Create a new album
-POST http://localhost:3000/api/album
+POST http://localhost:3000/api/album HTTP/2
 Authorization: secret
 
 secret
 
-###
-GET http://localhost:3000/
+> {%
+    /// extract new album
+    let location = response.headers.valueOf("LOCATION").toString()
+    client.global.set("album", location)
+    // request.variables.set("album", location)
+%}
 
 ###
-DELETE http://localhost:3000/api/album/ABCD1234
-
-###
-POST https://example.com/api/upload HTTP/1.1
+/// upload image
+POST http://localhost:3000/api{{album}} HTTP/2
+Authorization: secret
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
-Content-Disposition: form-data; name="first"; filename="input.txt"
+Content-Disposition: form-data; name="file"; filename="testbild.jpg"
 
-// The 'input.txt' file will be uploaded
-< ./input.txt
-
+// The 'testbild.jpg' file will be uploaded
+< ./testbild.jpg
 --boundary
-Content-Disposition: form-data; name="second"; filename="input-second.txt"
+Content-Disposition: form-data; name="name"; filename="testbild.jpg"
 
-// A temporary 'input-second.txt' file with the 'Text' content will be created and uploaded
-Text
---boundary
-Content-Disposition: form-data; name="third";
-
-// The 'input.txt' file contents will be sent as plain text.
-< ./input.txt --boundary--
-
+testbild.jpg
 
 ###
-DELETE http://localhost:3000/api/album/ABCD1234/f80d31b6-8193-40a4-92ff-fcc6b1f6f284
+/// delete image
+DELETE http://localhost:3000/apiapi{{album}}/f80d31b6-8193-40a4-92ff-fcc6b1f6f284
+
+###
+// delete album
+DELETE http://localhost:3000/api{{album}} HTTP/2
+

@@ -5,27 +5,40 @@
 Showing a grid of photos with an authentication to select different albums with an ALBUMCODE and a PASSCODE acting as secret.
 This application uses Server-Side Rendering manipulating the DOM.
 
-## Usaqge
+## 🌱 Usage
 
-Define an admin password in the config (only required for first start).
+Define the _root_path_ and an _admin secret_ in the config.
+> The admin secret is only required for the start of the application.
+
+```toml
+root_dir = "./public/"
+secret = "secret"
+```
 
 Manage albums via these endpoints:
 
 - `POST /album` to create a new album - returns `201 - location /album/ABCD1234`
-- `DELETE /album/ABCD1234` - to delete an album - returns `204 No Content`
 - `POST /album/ABCD1234` - to add new items to an album
+- `DELETE /album/ABCD1234` - to delete an album - returns `204 No Content`
 - `DELETE /album/ABCD1234/f80d31b6-8193-40a4-92ff-fcc6b1f6f284` - to delete an item from the album
 
-All these endpoints need an `Authentication = Basic base64(admin_password)` header.
+All these endpoints need an Authentication header containing the admin secret: `Authentication: secret`
 
 
-## Running your project
+## 🚀 Running your project
 
 ```bash
 cargo leptos watch
 ```
 
-# License
+
+# ⚠️ TODO
+
+ - fix `create_signal` in app:119 to observe changes
+ - read `root_path` from config in app/src/components/app.rs:104
+ - un/select photos in grid for fullscreen view
+
+# ⚖️⚖️ License
 
 Copyright 2024 by Stürmer, Benjamin <benjamin@stuermer.pro> is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 

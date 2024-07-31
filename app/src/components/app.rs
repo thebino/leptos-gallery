@@ -19,6 +19,9 @@ use leptos_router::ActionForm;
 use leptos_router::Route;
 use leptos_router::Router;
 use leptos_router::Routes;
+use tracing::error;
+use leptos::*;
+
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
@@ -43,8 +46,6 @@ pub mod ssr {
 pub async fn get_user() -> Result<Option<Album>, ServerFnError> {
     use self::ssr::auth;
     let auth = auth()?;
-
-    dbg!(auth.clone().current_user);
 
     Ok(auth.current_user)
 }
@@ -84,49 +85,27 @@ pub fn App() -> impl IntoView {
                     user.get()
                         .map(|user| match user {
                             Err(e) => {
+                                error!("Login error: {}", e);
                                 view! {
-                                    <p>{format!("Login error: {}", e)}</p>
+                                    // no content -> ErrorTemplate will be shown anyway
                                 }
                                 .into_view()
                             }
 
                             Ok(None) => {
                                 view! {
-                                    <p>Please enter your <b>ALBUMCODE</b> and <b>PASSCODE</b>.</p>
-                                    <ActionForm action=login>
-                                        <label>
-                                            "Albumcode: "
-                                            <input
-                                                type="text"
-                                                placeholder="Albumcode"
-                                                maxlength="32"
-                                                name="albumcode"
-                                                class="auth-input"
-                                            />
-                                        </label>
-                                        <br/>
-                                        <label>
-                                            "Password: "
-                                            <input type="passcode" placeholder="Passcode" name="passcode" class="auth-input"/>
-                                        </label>
-                                        <br/>
-                                        <input type="hidden" name="id"/>
-                                        <input type="submit" value="Open album"/>
-                                    </ActionForm>
+                                    <Login action=login/>
                                 }
                                 .into_view()
                             }
 
                             Ok(Some(user)) => {
-                                // album.update = user.username;i
                                 let (album, _set_album) = create_signal(user.username);
+                                let (root, _set_root) = create_signal("./public".to_string());
 
                                 view! {
-                                    <div class="selected_album">{format!("Selected album: {}", album.get())} </div><Logout action=logout/>
-                                    <PhotoGrid album={album} />
-                                    // <h2>"Cart"</h2>
-                                    // <CartItems cart=cart set_cart=set_cart />
-                                    // <button on:click=checkout>"Checkout"</button>
+                                    <Logout action=logout album=album />
+                                    <PhotoGrid album=album root=root />
                                 }
                                 .into_view()
                             }
@@ -151,7 +130,7 @@ pub fn Home() -> impl IntoView {}
 pub async fn login(
     albumcode: String,
     passcode: String,
-    remember: Option<String>,
+    //remember: Option<String>,
 ) -> Result<(), ServerFnError> {
     use self::ssr::*;
 
@@ -162,10 +141,8 @@ pub async fn login(
         .await
         .ok_or_else(|| ServerFnError::new("Albumcode not found!"))?;
 
-    dbg!(user.clone());
-
     auth.login_user(user.id);
-    auth.remember_user(remember.is_some());
+    //auth.remember_user(remember.is_some());
     leptos_axum::redirect("/");
 
     Ok(())
@@ -186,38 +163,38 @@ pub async fn logout() -> Result<(), ServerFnError> {
 #[component]
 pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView {
     view! {
-        <ActionForm action=action>
-            <h1>"Log In"</h1>
-            <label>
-                "Albumcode:"
-                <input
-                    type="text"
-                    placeholder="Albumcode"
-                    maxlength="32"
-                    name="albumcode"
-                    class="auth-input"
-                />
-            </label>
-            <br/>
-            <label>
-                "Passcode:"
-                <input type="passcode" placeholder="Passcode" name="passcode" class="auth-input"/>
-            </label>
-            <br/>
-            <button type="submit" class="button">
-                "Log In"
-            </button>
-        </ActionForm>
+        <div class="center-screen">
+            <ActionForm action=action>
+                <label>
+                    <input
+                        type="text"
+                        placeholder="Albumcode"
+                        maxlength="32"
+                        name="albumcode"
+                        class="auth-input"
+                    />
+                </label>
+                <br/>
+                <label>
+                    <input type="passcode" placeholder="Passcode" name="passcode" class="auth-input"/>
+                </label>
+                <br/>
+                <input type="hidden" name="id"/>
+                <input type="submit" class="button" value="Open album"/>
+            </ActionForm>
+        </div>
     }
 }
 
 #[component]
-pub fn Logout(action: Action<Logout, Result<(), ServerFnError>>) -> impl IntoView {
+pub fn Logout(action: Action<Logout, Result<(), ServerFnError>>, album: ReadSignal<String>) -> impl IntoView {
     view! {
-        <ActionForm action=action>
+        <div class="selected_album">{format!("Selected album: {}", album.get())} </div>
+            <ActionForm action=action>
             <button type="submit" class="button">
                 "Change album"
             </button>
         </ActionForm>
+
     }
 }

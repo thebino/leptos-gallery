@@ -8,6 +8,8 @@ use sqlx::SqlitePool;
 pub mod handlers;
 pub mod middlewares;
 
+pub mod config;
+
 #[derive(FromRef, Debug, Clone)]
 pub struct LeptosAppState {
     pub leptos_options: LeptosOptions,

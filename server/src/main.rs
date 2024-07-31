@@ -22,19 +22,21 @@ pub(crate) mod db;
 pub(crate) mod fileserv;
 pub mod handlers;
 
+pub mod config;
+
 use crate::handlers::album::add_album::add_album;
-use crate::handlers::cart::add_to_cart;
-use crate::handlers::cart::get_cart;
 use crate::handlers::leptos_routes::leptos_routes_handler;
 use crate::handlers::server_functions::server_fn_handler;
 
 use server::LeptosAppState;
 use server::AppState;
 use sqlx::SqlitePool;
+use server::config::config::Config;
 use server::handlers::album::delete_album::delete_album;
 use server::middlewares::auth::auth_middleware;
 use crate::handlers::album::add_item::add_item;
 use crate::handlers::album::delete_item::delete_item;
+use crate::handlers::album::get_item::get_item;
 
 #[tokio::main]
 async fn main() {
@@ -68,7 +70,9 @@ async fn main() {
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(App);
-    let root_path = PathBuf::from("../public/");
+
+    let config = Config::new("config.toml");
+    let root_path = PathBuf::from(config.root_dir);
 
     let leptos_app_state = LeptosAppState {
         leptos_options,
@@ -80,7 +84,7 @@ async fn main() {
     let app_state = AppState {
         pool: pool.clone(),
         root: root_path,
-        password: Some("secret".to_string()) // TODO: read secret from config
+        password: config.secret
     };
 
     // build our application with a route
@@ -89,10 +93,9 @@ async fn main() {
         .route("/api/album/:album_code", delete(delete_album))
         .route("/api/album/:album_code", post(add_item))
         .route("/api/album/:album_code/:item_id", delete(delete_item))
+        .route("/api/album/:album_code/:item_id", get(get_item))
         .with_state(app_state.clone())
         .route_layer(middleware::from_fn_with_state(app_state, auth_middleware))
-        .route("/get_cart", post(get_cart))
-        .route("/add_to_cart", post(add_to_cart))
         .route(
             "/api/*fn_name",
             get(server_fn_handler).post(server_fn_handler),

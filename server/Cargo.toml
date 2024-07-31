@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+config-file = "0.2.3"
 anyhow.workspace = true
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
@@ -38,8 +39,11 @@ config = "0.14.0"
 uuid.workspace = true
 rand = "0.8.5"
 bytes = "1.6.0"
+tokio-util = "0.7.11"
+http-body-util.workspace = true
+mime = "0.3.17"
+thumbnailer = "0.5.1"
 
 [dev-dependencies]
 axum-test = "15.3.0"
-http-body-util.workspace = true
 tower-http = { version = "0.4.0", features = ["trace"] }
