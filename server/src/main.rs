@@ -1,42 +1,44 @@
-use std::path::PathBuf;
 use app::components::app::App;
 use app::models::user::Album;
-use axum::routing::{delete, get};
+use axum::routing::delete;
+use axum::routing::get;
 use axum::routing::post;
-use axum::{middleware, Router};
+use axum::Router;
 use axum_session::SessionConfig;
 use axum_session::SessionLayer;
 use axum_session::SessionSqlitePool;
 use axum_session::SessionStore;
 use axum_session_auth::AuthConfig;
 use axum_session_auth::AuthSessionLayer;
-use fileserv::file_and_error_handler;
 use leptos::*;
-use leptos_axum::{generate_route_list, LeptosRoutes};
+use leptos_axum::generate_route_list;
+use leptos_axum::LeptosRoutes;
+use routes::album::add_album::add_album;
+use routes::album::add_item::add_item;
+use routes::album::delete_album::delete_album;
+use routes::album::delete_item::delete_item;
+use routes::album::get_album::get_album;
+use routes::album::get_item::get_item;
+use routes::fileserv::file_and_error_handler;
+use std::path::PathBuf;
 use tracing_subscriber::fmt;
 
 use crate::db::init_db;
 
-pub mod auth;
 pub(crate) mod db;
-pub(crate) mod fileserv;
-pub mod handlers;
+pub(crate) mod middleware;
+pub(crate) mod routes;
 
 pub mod config;
 
-use crate::handlers::album::add_album::add_album;
-use crate::handlers::leptos_routes::leptos_routes_handler;
-use crate::handlers::server_functions::server_fn_handler;
+use crate::routes::leptos_routes::leptos_routes_handler;
+use crate::routes::server_functions::server_fn_handler;
 
-use server::LeptosAppState;
+use server::config::Config;
+use server::middleware::auth::auth_middleware;
 use server::AppState;
+use server::LeptosAppState;
 use sqlx::SqlitePool;
-use server::config::config::Config;
-use server::handlers::album::delete_album::delete_album;
-use server::middlewares::auth::auth_middleware;
-use crate::handlers::album::add_item::add_item;
-use crate::handlers::album::delete_item::delete_item;
-use crate::handlers::album::get_item::get_item;
 
 #[tokio::main]
 async fn main() {
@@ -84,18 +86,22 @@ async fn main() {
     let app_state = AppState {
         pool: pool.clone(),
         root: root_path,
-        password: config.secret
+        password: config.secret,
     };
 
     // build our application with a route
-    let app = Router::new()
+    let app: Router = Router::new()
         .route("/api/album", post(add_album))
+        .route("/api/album/:album_code", get(get_album))
         .route("/api/album/:album_code", delete(delete_album))
         .route("/api/album/:album_code", post(add_item))
         .route("/api/album/:album_code/:item_id", delete(delete_item))
         .route("/api/album/:album_code/:item_id", get(get_item))
         .with_state(app_state.clone())
-        .route_layer(middleware::from_fn_with_state(app_state, auth_middleware))
+        .route_layer(axum::middleware::from_fn_with_state(
+            app_state,
+            auth_middleware,
+        ))
         .route(
             "/api/*fn_name",
             get(server_fn_handler).post(server_fn_handler),

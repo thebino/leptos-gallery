@@ -13,6 +13,7 @@ end2end/playwright-report/
 playwright/.cache/
 
 
-photo.db*
+gallery.sqlite*
 public/
 !public/favicon.ico
+

@@ -11,6 +11,7 @@ use leptos::Errors;
 use leptos::IntoView;
 use leptos::ServerFnError;
 use leptos::Transition;
+use leptos::*;
 use leptos::{component, view, SignalGet};
 use leptos_meta::provide_meta_context;
 use leptos_meta::Stylesheet;
@@ -20,8 +21,6 @@ use leptos_router::Route;
 use leptos_router::Router;
 use leptos_router::Routes;
 use tracing::error;
-use leptos::*;
-
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
@@ -56,12 +55,7 @@ pub fn App() -> impl IntoView {
     let logout = create_server_action::<Logout>();
 
     let user = create_resource(
-        move || {
-            (
-                login.version().get(),
-                logout.version().get(),
-            )
-        },
+        move || (login.version().get(), logout.version().get()),
         move |_| get_user(),
     );
 
@@ -100,12 +94,16 @@ pub fn App() -> impl IntoView {
                             }
 
                             Ok(Some(user)) => {
+                                // TODO: get images for album
+                                let images: Vec<String> = fetch_album(user.username).await.unwrap_or_else(|a| a);
+                                // TODO: get image binary for each image
+                                let image_data = fetch_image_data().await.unwrap_or_else(|_| String::new());
+
                                 let (album, _set_album) = create_signal(user.username);
-                                let (root, _set_root) = create_signal("./public".to_string());
 
                                 view! {
                                     <Logout action=logout album=album />
-                                    <PhotoGrid album=album root=root />
+                                    <PhotoGrid images=images />
                                 }
                                 .into_view()
                             }
@@ -126,12 +124,34 @@ pub fn App() -> impl IntoView {
 #[component]
 pub fn Home() -> impl IntoView {}
 
+#[server]
+pub async fn fetch_album(album_id: String) -> Result<Vec<String>, ServerFnError> {
+    let response = reqwest::get(format!("http://localhost:3000/api/album/{}", album_id))
+        .await?
+        .json::<Vec<String>>()
+        .await?;
+
+    Ok(response)
+}
+
+#[server]
+pub async fn fetch_image_data(
+    album_id: String,
+    image_id: String,
+) -> Result<Vec<String>, ServerFnError> {
+    let response = reqwest::get(format!(
+        "http://localhost:3000/api/album/{}/{}?w=300",
+        album_id, image_id
+    ))
+    .await?
+    .json::<Vec<String>>()
+    .await?;
+
+    Ok(response)
+}
+
 #[server(Login, "/api")]
-pub async fn login(
-    albumcode: String,
-    passcode: String,
-    //remember: Option<String>,
-) -> Result<(), ServerFnError> {
+pub async fn login(albumcode: String, passcode: String) -> Result<(), ServerFnError> {
     use self::ssr::*;
 
     let pool = pool()?;
@@ -142,7 +162,6 @@ pub async fn login(
         .ok_or_else(|| ServerFnError::new("Albumcode not found!"))?;
 
     auth.login_user(user.id);
-    //auth.remember_user(remember.is_some());
     leptos_axum::redirect("/");
 
     Ok(())
@@ -187,9 +206,12 @@ pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView 
 }
 
 #[component]
-pub fn Logout(action: Action<Logout, Result<(), ServerFnError>>, album: ReadSignal<String>) -> impl IntoView {
+pub fn Logout(
+    action: Action<Logout, Result<(), ServerFnError>>,
+    album: ReadSignal<String>,
+) -> impl IntoView {
     view! {
-        <div class="selected_album">{format!("Selected album: {}", album.get())} </div>
+        <div class="selected_album">{format!("Selected album: {}", album.get_untracked())} </div>
             <ActionForm action=action>
             <button type="submit" class="button">
                 "Change album"

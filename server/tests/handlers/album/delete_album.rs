@@ -1,27 +1,29 @@
 #[cfg(test)]
 mod tests {
-    use std::fs;
-    use std::path::PathBuf;
     use axum::body::Body;
-    use axum::http::{self};
     use axum::http::Request;
+    use axum::http::{self};
     use axum::response::Response;
-    use axum::{middleware, Router};
     use axum::routing::{delete, post};
+    use axum::{middleware, Router};
     use http::StatusCode;
-    use serde_json::{json, Value};
-    use server::handlers::album::add_album::{add_album};
-    use tower::ServiceExt; // for `oneshot`
     use http_body_util::BodyExt; // for `collect`
     use leptos::html::body;
-    use sqlx::{Row, SqlitePool};
-    use server::AppState;
-    use testdir::testdir;
+    use serde_json::{json, Value};
+    use server::handlers::album::add_album::add_album;
     use server::handlers::album::delete_album::delete_album;
     use server::middlewares::auth::auth_middleware;
+    use server::AppState;
+    use sqlx::{Row, SqlitePool};
+    use std::fs;
+    use std::path::PathBuf;
+    use testdir::testdir;
+    use tower::ServiceExt; // for `oneshot`
 
     #[sqlx::test]
-    pub async fn delete_album_call_with_valid_credentials_should_succeed(pool: SqlitePool) -> anyhow::Result<()> {
+    pub async fn delete_album_call_with_valid_credentials_should_succeed(
+        pool: SqlitePool,
+    ) -> anyhow::Result<()> {
         // given
         let dir: PathBuf = testdir!();
         sqlx::migrate!("../migrations").run(&pool).await?;
@@ -32,7 +34,7 @@ mod tests {
         let state = AppState {
             pool: pool.clone(),
             root: dir.clone(),
-            password: Some("secret".to_string())
+            password: Some("secret".to_string()),
         };
 
         // add album to delete
@@ -49,7 +51,10 @@ mod tests {
 
         let router = Router::new()
             .route("/album/:album_code", delete(delete_album))
-            .route_layer(middleware::from_fn_with_state(state.clone(), auth_middleware))
+            .route_layer(middleware::from_fn_with_state(
+                state.clone(),
+                auth_middleware,
+            ))
             .with_state(state.clone());
 
         // when
@@ -59,10 +64,7 @@ mod tests {
             .header(http::header::AUTHORIZATION, state.password.unwrap())
             .body(Body::empty())
             .unwrap();
-        let response: Response<Body> = router
-            .oneshot(request)
-            .await
-            .unwrap();
+        let response: Response<Body> = router.oneshot(request).await.unwrap();
 
         // then
         assert_eq!(response.status(), StatusCode::NO_CONTENT);

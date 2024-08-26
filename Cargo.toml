@@ -10,10 +10,10 @@ opt-level = 'z'
 
 [workspace.dependencies]
 anyhow = { version = "1.0.86" }
-leptos = { version = "0.6" }
+leptos = { version = "0.6", features = ["experimental-islands"] }
 leptos_meta = { version = "0.6" }
 leptos_router = { version = "0.6" }
-leptos_axum = { version = "0.6" }
+leptos_axum = { version = "0.6", features = ["experimental-islands"] }
 
 axum = "0.7"
 axum_session_auth = { version = "0.12.1", features = ["sqlite-rustls"]}

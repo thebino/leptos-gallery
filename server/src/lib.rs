@@ -5,8 +5,8 @@ use leptos::LeptosOptions;
 use leptos_router::RouteListing;
 use sqlx::SqlitePool;
 
-pub mod handlers;
-pub mod middlewares;
+pub mod middleware;
+pub mod routes;
 
 pub mod config;
 
@@ -22,5 +22,5 @@ pub struct LeptosAppState {
 pub struct AppState {
     pub pool: SqlitePool,
     pub root: PathBuf,
-    pub password: Option<String>
+    pub password: Option<String>,
 }

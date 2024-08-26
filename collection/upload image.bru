@@ -1,0 +1,24 @@
+meta {
+  name: upload image
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/api/album/qKoFcm
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Authorization: secret
+}
+
+body:multipart-form {
+  name: testfile.jpg
+  file: @file(/Users/stuermer/workspace/thebino/leptos-gallery/testbild.jpg)
+}
+
+docs {
+  The new album ID is returned in the `Location` header in the response.
+}

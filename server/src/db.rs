@@ -3,7 +3,7 @@ use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
 
 pub async fn init_db() -> SqlitePool {
-    let database_url = "sqlite://photo.db";
+    let database_url = "sqlite://gallery.sqlite";
 
     if !sqlx::Sqlite::database_exists(database_url)
         .await

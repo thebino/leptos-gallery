@@ -32,12 +32,6 @@ cargo leptos watch
 ```
 
 
-# ⚠️ TODO
-
- - fix `create_signal` in app:119 to observe changes
- - read `root_path` from config in app/src/components/app.rs:104
- - un/select photos in grid for fullscreen view
-
 # ⚖️⚖️ License
 
 Copyright 2024 by Stürmer, Benjamin <benjamin@stuermer.pro> is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)

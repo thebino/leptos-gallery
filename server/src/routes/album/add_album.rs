@@ -1,16 +1,13 @@
-use std::fs;
-use axum::{body, http::StatusCode, response::Response};
+use crate::AppState;
 use axum::extract::State;
 use axum::response::IntoResponse;
-use tracing::error;
-use rand::Rng;
+use axum::{body, http::StatusCode, response::Response};
 use rand::distributions::Alphanumeric;
-use crate::AppState;
+use rand::Rng;
+use std::fs;
+use tracing::error;
 
-pub async fn add_album(
-    State(state): State<AppState>,
-    passcode: String,
-) -> impl IntoResponse {
+pub async fn add_album(State(state): State<AppState>, passcode: String) -> impl IntoResponse {
     let album_code = generate_album_code();
     let path = state.root.join(album_code.clone());
     dbg!(passcode.clone());
@@ -35,7 +32,5 @@ pub async fn add_album(
 /// Generates a random string/number combination as access code for an album
 fn generate_album_code() -> String {
     let mut rng = rand::thread_rng();
-    (0..6)
-        .map(|_| rng.sample(Alphanumeric) as char)
-        .collect()
+    (0..6).map(|_| rng.sample(Alphanumeric) as char).collect()
 }

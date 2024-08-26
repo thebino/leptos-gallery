@@ -1,10 +1,10 @@
-use std::fs;
-use std::fs::File;
-use std::io::{BufReader, Cursor};
 use axum::extract::{Multipart, Path, State};
 use axum::response::{IntoResponse, Response};
 use bytes::Bytes;
 use http::StatusCode;
+use std::fs;
+use std::fs::File;
+use std::io::{BufReader, Cursor};
 use thumbnailer::{create_thumbnails, ThumbnailSize};
 use tracing::{debug, error, info, warn};
 
@@ -46,7 +46,10 @@ pub async fn add_item(
     let file_result = tokio::fs::write(&photo_path.join(&name), &bytes).await;
     match file_result {
         Ok(_) => {
-            info!("wrote photo to {}", photo_path.clone().join(&name).to_str().unwrap().to_string());
+            info!(
+                "wrote photo to {}",
+                photo_path.clone().join(&name).to_str().unwrap().to_string()
+            );
         }
         Err(err) => {
             warn!(
@@ -60,18 +63,20 @@ pub async fn add_item(
     // create thumbnail
     let file = File::open(&photo_path.join(&name)).unwrap();
     let reader = BufReader::new(file);
-    let mut  thumbnails = create_thumbnails(reader, mime::IMAGE_JPEG, [ThumbnailSize::Medium]).unwrap();
+    let mut thumbnails =
+        create_thumbnails(reader, mime::IMAGE_JPEG, [ThumbnailSize::Medium]).unwrap();
     let thumbnail = thumbnails.pop().unwrap();
     let mut buf = Cursor::new(Vec::new());
     thumbnail.write_png(&mut buf).unwrap();
     let data = buf.into_inner();
-    
-    
-    
+
     let file_result = tokio::fs::write(&thumb_path.join(&name), &data).await;
     match file_result {
         Ok(_) => {
-            info!("wrote thumb to {}", thumb_path.to_str().unwrap().to_string());
+            info!(
+                "wrote thumb to {}",
+                thumb_path.to_str().unwrap().to_string()
+            );
         }
         Err(err) => {
             warn!(

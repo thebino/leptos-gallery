@@ -1,0 +1,19 @@
+meta {
+  name: create album
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/album
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: secret
+}
+
+docs {
+  The new album ID is returned in the `Location` header in the response.
+}

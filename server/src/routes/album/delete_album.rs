@@ -1,13 +1,13 @@
-use std::fs;
-use axum::{http::StatusCode, response::Response};
+use crate::AppState;
 use axum::extract::{Path, State};
 use axum::response::IntoResponse;
-use tracing::{error};
-use crate::AppState;
+use axum::{http::StatusCode, response::Response};
+use std::fs;
+use tracing::error;
 
 pub async fn delete_album(
     State(state): State<AppState>,
-    Path(album_code): Path<String>
+    Path(album_code): Path<String>,
 ) -> impl IntoResponse {
     dbg!(album_code.clone());
     let path = state.root.join(album_code.clone());

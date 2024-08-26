@@ -125,6 +125,7 @@ dependencies = [
  "axum_session 0.12.4",
  "axum_session_auth",
  "axum_session_sqlx",
+ "base64 0.13.1",
  "cfg-if",
  "http 1.1.0",
  "leptos",
@@ -447,6 +448,12 @@ dependencies = [
  "object",
  "rustc-demangle",
 ]
+
+[[package]]
+name = "base64"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
@@ -1865,6 +1872,8 @@ dependencies = [
  "leptos_macro",
  "leptos_reactive",
  "leptos_server",
+ "serde",
+ "serde_json",
  "server_fn",
  "tracing",
  "typed-builder",
@@ -3323,6 +3332,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+ "walkdir",
 ]
 
 [[package]]
