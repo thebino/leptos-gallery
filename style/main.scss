@@ -2,6 +2,10 @@ body {
 	font-family: sans-serif;
 }
 
+header {
+  margin: 4px !important;
+}
+
 .center-screen {
   display: flex;
   justify-content: center;
@@ -27,11 +31,12 @@ body {
 input {
   width: 100%;
   padding: 12px 20px;
-  margin: 8px 0;
+  margin: 2px 0 !important;
   box-sizing: border-box;
 }
 
 .selected_album {
-float: left;
+  float: left;
   padding: 8px 32px;
 }
+

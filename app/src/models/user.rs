@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Album {
     pub id: i64,
     pub anonymous: bool,
-    pub username: String,
+    pub albumcode: String,
+    pub passcode: String,
 }
 
 #[cfg(feature = "ssr")]
@@ -33,7 +34,8 @@ pub mod ssr {
             Some(Album {
                 id: sqluser.id,
                 anonymous: false,
-                username: sqluser.albumcode,
+                albumcode: sqluser.albumcode,
+                passcode: sqluser.passcode,
             })
         }
 
@@ -53,7 +55,8 @@ pub mod ssr {
                 Some(Album {
                     id: sql_album.id,
                     anonymous: false,
-                    username: sql_album.albumcode,
+                    albumcode: sql_album.albumcode,
+                    passcode: sql_album.passcode,
                 })
             } else {
                 None

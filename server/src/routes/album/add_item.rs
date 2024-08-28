@@ -61,7 +61,7 @@ pub async fn add_item(
     }
 
     // create thumbnail
-    let file = File::open(&photo_path.join(&name)).unwrap();
+    let file = File::open(photo_path.join(&name)).unwrap();
     let reader = BufReader::new(file);
     let mut thumbnails =
         create_thumbnails(reader, mime::IMAGE_JPEG, [ThumbnailSize::Medium]).unwrap();

@@ -42,6 +42,7 @@ bytes = "1.6.0"
 tokio-util = "0.7.11"
 http-body-util.workspace = true
 mime = "0.3.17"
+mime_guess = "2.0.5"
 thumbnailer = "0.5.1"
 walkdir = "2.5.0"
 

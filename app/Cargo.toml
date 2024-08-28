@@ -21,7 +21,7 @@ thiserror.workspace = true
 
 serde.workspace = true
 rand.workspace = true
-base64 = "0.13"
+base64.workspace = true
 
 # SSR
 axum = { workspace = true, features = [ "macros", "ws" ], optional = true }

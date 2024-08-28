@@ -2,6 +2,7 @@ use crate::components::photo_grid::PhotoGrid;
 use crate::error_template::AppError;
 use crate::error_template::ErrorTemplate;
 use crate::models::user::Album;
+use base64::encode;
 use leptos::create_resource;
 use leptos::create_server_action;
 use leptos::create_signal;
@@ -21,6 +22,7 @@ use leptos_router::Route;
 use leptos_router::Router;
 use leptos_router::Routes;
 use tracing::error;
+use tracing::info;
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
@@ -59,21 +61,57 @@ pub fn App() -> impl IntoView {
         move |_| get_user(),
     );
 
+    let images = create_resource(
+        move || user.get(),
+        |user| async move {
+            logging::log!("user changed");
+            let mut images_data = Vec::<String>::new();
+            match user {
+                Some(Ok(Some(user))) => {
+                    logging::log!("load images for album {:?}", user.albumcode);
+                    let images = fetch_album(user.albumcode.clone(), user.passcode.clone()).await;
+                    match images {
+                        Ok(images) => {
+                            logging::log!("Found {} images", images.len());
+                            for image in images {
+                                let image_data = fetch_image_data(
+                                    user.albumcode.clone(),
+                                    user.passcode.clone(),
+                                    image.clone(),
+                                )
+                                .await;
+                                logging::log!("Image {} loaded.", image);
+                                images_data.push(image_data.unwrap());
+                            }
+                        }
+                        Err(e) => logging::log!("Could not fetch album: {:?}", e),
+                    };
+                    images_data
+                }
+
+                _ => images_data,
+            }
+        },
+    );
+
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
 
     view! {
         <Stylesheet id="leptos" href="/pkg/photo-grid.css"/>
         <Title text="Photos"/>
+        <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery/2.5.0/css/lightgallery-bundle.min.css" />
+          <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
+
+        <div class="ui main container mx-auto">
 
         <Router fallback=|| {
             let mut outside_errors = Errors::default();
             outside_errors.insert_with_default_key(AppError::NotFound);
             view! { <ErrorTemplate outside_errors/> }.into_view()
         }>
-            <header>
             <Transition fallback=move || {
-                view! { <span>"Loading..."</span> }
+                view! { <span>"Loading user..."</span> }
             }>
                 {move || {
                     user.get()
@@ -94,23 +132,29 @@ pub fn App() -> impl IntoView {
                             }
 
                             Ok(Some(user)) => {
-                                // TODO: get images for album
-                                let images: Vec<String> = fetch_album(user.username).await.unwrap_or_else(|a| a);
-                                // TODO: get image binary for each image
-                                let image_data = fetch_image_data().await.unwrap_or_else(|_| String::new());
 
-                                let (album, _set_album) = create_signal(user.username);
+                                let (album, _set_album) = create_signal(user.albumcode);
 
                                 view! {
+                                    <header>
                                     <Logout action=logout album=album />
-                                    <PhotoGrid images=images />
+                                    </header>
+
+                                    <Transition fallback=move || {
+                                        view! {
+                                            <span>"Load images...:"</span>
+                                        }
+                                    }>
+
+                                        <PhotoGrid images=images.get().unwrap_or(vec![]) />
+                                    </Transition>
+
                                 }
                                 .into_view()
                             }
                         })
                 }}
             </Transition>
-            </header>
 
                <main>
                 <Routes>
@@ -119,35 +163,53 @@ pub fn App() -> impl IntoView {
                 </Routes>
             </main>
         </Router>
+
+        </div>
     }
 }
 #[component]
 pub fn Home() -> impl IntoView {}
 
 #[server]
-pub async fn fetch_album(album_id: String) -> Result<Vec<String>, ServerFnError> {
-    let response = reqwest::get(format!("http://localhost:3000/api/album/{}", album_id))
-        .await?
-        .json::<Vec<String>>()
+pub async fn fetch_album(
+    albumcode: String,
+    passcode: String,
+) -> Result<Vec<String>, ServerFnError> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get(format!("http://localhost:3000/api/album/{}", albumcode))
+        .header("Authorization", passcode)
+        .send()
         .await?;
 
-    Ok(response)
+    info!("Response status: {}", response.status());
+
+    let data: Vec<String> = response.json().await?;
+
+    Ok(data)
 }
 
 #[server]
 pub async fn fetch_image_data(
-    album_id: String,
-    image_id: String,
-) -> Result<Vec<String>, ServerFnError> {
-    let response = reqwest::get(format!(
-        "http://localhost:3000/api/album/{}/{}?w=300",
-        album_id, image_id
-    ))
-    .await?
-    .json::<Vec<String>>()
-    .await?;
+    albumcode: String,
+    passcode: String,
+    filename: String,
+) -> Result<String, ServerFnError> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get(format!(
+            "http://localhost:3000/api/album/{}/{}?w=300",
+            albumcode, filename
+        ))
+        .header("Authorization", passcode)
+        .send()
+        .await?;
 
-    Ok(response)
+    let bytes = response.bytes().await?;
+
+    let data = encode(bytes);
+
+    Ok(data)
 }
 
 #[server(Login, "/api")]
@@ -195,7 +257,7 @@ pub fn Login(action: Action<Login, Result<(), ServerFnError>>) -> impl IntoView 
                 </label>
                 <br/>
                 <label>
-                    <input type="passcode" placeholder="Passcode" name="passcode" class="auth-input"/>
+                    <input type="password" placeholder="Passcode" name="passcode" class="auth-input"/>
                 </label>
                 <br/>
                 <input type="hidden" name="id"/>

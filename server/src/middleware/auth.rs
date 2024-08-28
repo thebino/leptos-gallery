@@ -6,6 +6,7 @@ use axum::response::Response;
 use serde_json::json;
 use tracing::error;
 
+#[allow(dead_code)]
 pub async fn auth_middleware(
     State(state): State<AppState>,
     req: Request,

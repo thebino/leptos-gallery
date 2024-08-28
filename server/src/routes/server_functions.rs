@@ -11,9 +11,11 @@ use log::info;
 use sqlx::SqlitePool;
 
 use crate::LeptosAppState;
+#[allow(dead_code)]
 pub type AuthSession = axum_session_auth::AuthSession<Album, i64, SessionSqlitePool, SqlitePool>;
 
 /// Handler for server functions advanced with `AuthSession` and `AppState`
+#[allow(dead_code)]
 pub async fn server_fn_handler(
     State(app_state): State<LeptosAppState>,
     auth_session: AuthSession,
@@ -31,3 +33,4 @@ pub async fn server_fn_handler(
     )
     .await
 }
+
